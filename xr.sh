@@ -286,7 +286,7 @@ getData() {
             if [[ -z "${res}" ]]; then
                 colorEcho ${BLUE}  "${DOMAIN} 解析结果：${resolve}"
                 colorEcho ${RED}  " 域名未解析到当前服务器IP(${IP})!"
-                exit 1
+                #exit 1 #hijk.art失效了,我们这里改成不做域名解析检查
             fi
         fi
     fi
