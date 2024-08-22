@@ -70,6 +70,6 @@ function Remove-DuplicatedFile
 foreach($dir in $dirs)
 {
     if($dir -eq "") {break}
-    echo "处理$dir"
+    echo "正处理目录: $dir"
     Remove-DuplicatedFile -workDir $dir
 }
