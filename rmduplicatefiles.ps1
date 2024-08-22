@@ -1,17 +1,24 @@
 # 去掉重复文件 by zhouzhuo 2024.8.22
 
 #-------------------------控制参数-------------------------
+
 #工作目录, 可以修改. 注意结尾要有逗号,
 $dirs = @(
 "C:\Users\zhouzhuo\Lab\Repo\新建文件夹",
 "C:\Users\zhouzhuo\Lab\Repo\新建文件夹2",
 "C:\Users\zhouzhuo\Lab\Repo\新建文件夹3",
 "")
-#是否到子文件夹中执行去重操作
+
+#是否到子文件夹中执行去重操作, 如果不需要就改为0.
 $recurse = 1 
+
 #重复项目放到此目录, 可改名
 $duplicateName = "重复项目"
+
 #-------------------------控制参数-------------------------
+
+
+#-------------------------程序代码-------------------------
 
 function Remove-DuplicatedFile 
 {
@@ -39,7 +46,8 @@ function Remove-DuplicatedFile
     #获取所有文件项目, 排除文件夹项目
     $filearray = Get-ChildItem  $dirarray.FullName | Where-Object {$_.Attributes -ne "Directory"}
 
-    $map = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+    #每次要新建立一个map对象
+    $map = New-Object 'System.Collections.Generic.Dictionary[string,string]' 
 
     foreach($item in $filearray)
     {
@@ -62,7 +70,7 @@ function Remove-DuplicatedFile
             $map.Add($key, $value)
         }
     }
-
+    $map.Clear() #清理, 放置内存溢出
 
 
 }
