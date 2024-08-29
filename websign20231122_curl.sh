@@ -73,7 +73,7 @@ else
       
   done
   
-  logger -p user.err "WEBAUTH: Web authentication failed. Network is disconnected1."
+  logger -p user.err "WEBAUTH: Web authentication failed. Network is disconnected."
   exit 1
 
 fi
