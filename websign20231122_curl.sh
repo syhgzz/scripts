@@ -46,14 +46,14 @@ password="292519"
 encrypted_password=$(rc4 "$password" "$rckey")
 
 if ping -c 1 taobao.com > /dev/null 2>&1; then
-  logger "Network status: Online"
+  logger "WEBAUTH: Network status: Online"
   exit 0
 else
   
-  logger "Network status: Offline."
+  logger "WEBAUTH: Network status: Offline."
   
   for i in $(seq 3); do
-    logger "Time $i: Connecting to network."
+    logger "WEBAUTH: Time $i: Connecting to network."
     response=$(curl -s -X POST 'http://1.1.1.3/ac_portal/login.php' \
           -H 'Connection: keep-alive' \
           -H 'Accept: */*' \
@@ -67,13 +67,13 @@ else
           --data "opr=pwdLogin&userName=$user&pwd=$encrypted_password&auth_tag=$rckey&rememberPwd=0")
 
     if [ $? -eq 0 ]; then
-        logger "Web authentication succeeds. Network is connected."
+        logger "WEBAUTH: Web authentication succeeds. Network is connected."
         exit 0
     fi
       
   done
   
-  logger -p user.err "Web authentication failed. Network is disconnected1."
+  logger -p user.err "WEBAUTH: Web authentication failed. Network is disconnected1."
   exit 1
 
 fi
