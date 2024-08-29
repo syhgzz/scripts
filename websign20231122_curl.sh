@@ -52,7 +52,7 @@ else
   
   logger "Network status: Offline."
   
-  for (( i=1; i<= 3; i=i+1 )); do
+  for i in $(seq 3); do
     logger "Time $i: Connecting to network."
     response=$(curl -s -X POST 'http://1.1.1.3/ac_portal/login.php' \
           -H 'Connection: keep-alive' \
@@ -73,7 +73,7 @@ else
       
   done
   
-  logger -p user.err "Web authentication failed. Network is disconnected."
+  logger -p user.err "Web authentication failed. Network is disconnected1."
   exit 1
 
 fi
