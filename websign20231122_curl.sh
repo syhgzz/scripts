@@ -45,7 +45,7 @@ user="2240201012"
 password="292519"
 encrypted_password=$(rc4 "$password" "$rckey")
 
-if ping -c 1 taobao.com > /dev/null 2>&1; then
+if ping -c 1 163.com > /dev/null 2>&1; then
   logger "WEBAUTH: Network status: Online"
   exit 0
 else
