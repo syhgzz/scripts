@@ -45,28 +45,39 @@ user="2240201012"
 password="292519"
 encrypted_password=$(rc4 "$password" "$rckey")
 
-while true; do
-    if ping -c 1 www.baidu.com > /dev/null 2>&1; then
-        echo "network ok"
+if ping -c 1 taobao.com > /dev/null 2>&1; then
+  logger "Network status: Online"
+  exit 0
+else
+  
+  logger "Network status: Offline."
+  
+  for (( i=1; i<= 3; i=i+1 )); do
+    logger "Time $i: Connecting to network."
+    response=$(curl -s -X POST 'http://1.1.1.3/ac_portal/login.php' \
+          -H 'Connection: keep-alive' \
+          -H 'Accept: */*' \
+          -H 'X-Requested-With: XMLHttpRequest' \
+          -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36 Edg/111.0.1661.44' \
+          -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
+          -H 'Origin: http://1.1.1.3' \
+          -H 'Referer: http://1.1.1.3/ac_portal/20230318032256/pc.html?template=20230318032256&tabs=pwd-sms&vlanid=0&_ID_=0&switch_url=&url=http://1.1.1.3/homepage/index.html&controller_type=&mac=99-99-99-99-99-99' \
+          -H 'Accept-Language: zh-CN,zh;q=0.9' \
+          -H 'Accept-Encoding: gzip, deflate' \
+          --data "opr=pwdLogin&userName=$user&pwd=$encrypted_password&auth_tag=$rckey&rememberPwd=0")
+
+    if [ $? -eq 0 ]; then
+        logger "Web authentication succeeds. Network is connected."
         exit 0
-    else
-        echo "Connecting....."
-
-        response=$(curl -s -X POST 'http://1.1.1.3/ac_portal/login.php' \
-             -H 'Connection: keep-alive' \
-             -H 'Accept: */*' \
-             -H 'X-Requested-With: XMLHttpRequest' \
-             -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36 Edg/111.0.1661.44' \
-             -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
-             -H 'Origin: http://1.1.1.3' \
-             -H 'Referer: http://1.1.1.3/ac_portal/20230318032256/pc.html?template=20230318032256&tabs=pwd-sms&vlanid=0&_ID_=0&switch_url=&url=http://1.1.1.3/homepage/index.html&controller_type=&mac=99-99-99-99-99-99' \
-             -H 'Accept-Language: zh-CN,zh;q=0.9' \
-             -H 'Accept-Encoding: gzip, deflate' \
-             --data "opr=pwdLogin&userName=$user&pwd=$encrypted_password&auth_tag=$rckey&rememberPwd=0")
-
-        if [ $? -eq 0 ]; then
-            echo "Web authentication successful"
-        fi
-        exit 1
     fi
-done
+      
+  done
+  
+  logger -p user.err "Web authentication failed. Network is disconnected."
+  exit 1
+
+fi
+
+
+
+
