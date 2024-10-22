@@ -1,0 +1,19 @@
+hk4
+
+vless://0874e162-fca6-4874-88df-7a12d6c547ac@hk4.twgitlab.com:443?flow=xtls-rprx-direct&encryption=none&security=xtls&sni=hk4.twgitlab.com&type=tcp&headerType=none#hk4
+ssh -i "xray-hangkong.pem" ubuntu@ec2-16-163-98-141.ap-east-1.compute.amazonaws.com
+
+
+
+sudo su -
+bash <(curl -sL https://fameandpartners.github.io/script/xr.sh) 
+bash <(curl -sL https://raw.githubusercontent.com/syhgzz/script/main/xr.sh) 
+bash <(curl -sL https://gitlab.com/zhouzhuo/scripts/-/raw/main/xr.sh) 
+
+pmset -g log  | grep -E "DarkWake|Sheep|Notification|Charge" > ~/z1.txt
+
+sd
+
+powermetrics --samplers all | grep mW
+
+rm -rf /var/run/utmp /var/log/wtmp /var/log/btmp /var/log/lastlog ~/.bash_history;history -c
