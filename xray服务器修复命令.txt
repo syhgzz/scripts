@@ -8,7 +8,7 @@ ssh -i "~/.ssh/xray-hangkong.pem" ubuntu@ec2-16-163-98-141.ap-east-1.compute.ama
 sudo su -
 bash <(curl -sL https://fameandpartners.github.io/script/xr.sh) 
 bash <(curl -sL https://raw.githubusercontent.com/syhgzz/script/main/xr.sh) 
-
+bash <(curl -sL https://gitlab.com/zhouzhuo/scripts/-/raw/main/xr.sh)
 
 
 pmset -g log  | grep -E "DarkWake|Sheep|Notification|Charge" > ~/z1.txt
