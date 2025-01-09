@@ -9,7 +9,7 @@ sudo su -
 bash <(curl -sL https://fameandpartners.github.io/script/xr.sh) 
 bash <(curl -sL https://raw.githubusercontent.com/syhgzz/script/main/xr.sh) 
 bash <(curl -sL https://gitlab.com/zhouzhuo/scripts/-/raw/main/xr.sh)
-
+bash <(curl -sL https://syhgzz.github.io/scripts/xr.sh )
 
 pmset -g log  | grep -E "DarkWake|Sheep|Notification|Charge" > ~/z1.txt
 
