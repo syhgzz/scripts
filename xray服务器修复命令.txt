@@ -1,8 +1,12 @@
-hk4
+tailscale
+ssh -i ./.ssh/hangzhou-key.pem  root@47.99.164.87
+tailscale up --accept-dns=false --accept-routes --login-server=http://47.99.164.87:3355
+http://47.99.164.87:3355/web/devices.html
+scp  -i ./.ssh/hangzhou-key.pem  ~/  root@47.99.164.87:/root/
 
+hk4
 vless://0874e162-fca6-4874-88df-7a12d6c547ac@hk4.twgitlab.com:443?flow=xtls-rprx-direct&encryption=none&security=xtls&sni=hk4.twgitlab.com&type=tcp&headerType=none#hk4
 ssh -i "~/.ssh/xray-hangkong.pem" ubuntu@ec2-16-163-98-141.ap-east-1.compute.amazonaws.com
-
 
 
 sudo su -
@@ -13,7 +17,6 @@ bash <(curl -sL https://syhgzz.github.io/scripts/xr.sh )
 
 pmset -g log  | grep -E "DarkWake|Sheep|Notification|Charge" > ~/z1.txt
 
-sd
 
 powermetrics --samplers all | grep mW
 
