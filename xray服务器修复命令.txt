@@ -1,4 +1,4 @@
-tailscale
+tailscale 
 ssh -i ./.ssh/hangzhou-key.pem  root@47.99.164.87
 tailscale up --accept-dns=false --accept-routes --login-server=http://47.99.164.87:3355
 http://47.99.164.87:3355/web/devices.html
