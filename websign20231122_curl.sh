@@ -1,5 +1,9 @@
 #!/bin/sh
 
+#此处填城院上网的用户名和密码
+user="22222222"
+password="333333"
+
 rc4() {
   local data="$1"
   local key="$2"
@@ -41,8 +45,7 @@ rc4() {
 }
 
 rckey=$(date +%s)  # 使用标准秒时间戳
-user="2240201012"
-password="292519"
+
 encrypted_password=$(rc4 "$password" "$rckey")
 
 if ping -c 1 163.com > /dev/null 2>&1; then
