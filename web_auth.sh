@@ -1,7 +1,7 @@
 #!/bin/sh
 # 城院上网脚本 curl版. 
 # 来源: https://github.com/YYH2913/ZUCC_Internet_Automatic_Authrazation/tree/main By Ye Yanghan
-# 有所改动, 增加了系统日志, 记录于/var/log/syslog. By Zhou Zhuo 2024.10
+# 有所改动, 增加了系统日志, 记录于/var/log/syslog. By Zhou Zhuo 2024.10 
 
 
 #此处填城院上网的用户名和密码

@@ -1,3 +1,4 @@
+
 rc4() {
   local data="$1"
   local key="$2"
