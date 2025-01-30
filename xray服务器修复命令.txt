@@ -8,12 +8,24 @@ hk4
 vless://0874e162-fca6-4874-88df-7a12d6c547ac@hk4.twgitlab.com:443?flow=xtls-rprx-direct&encryption=none&security=xtls&sni=hk4.twgitlab.com&type=tcp&headerType=none#hk4
 ssh -i "~/.ssh/xray-hangkong.pem" ubuntu@ec2-16-163-98-141.ap-east-1.compute.amazonaws.com
 
+hk5
+vless://952a99c4-9dbe-4df6-ae4a-7d00e8571943@16.163.107.37:443?encryption=none&security=reality&sni=www.sky.com&fp=chrome&pbk=5U4CWjNirK6wa_ZT9thx41V2jwQLVp_7U0gxah5kOTw&sid=ea75a401&spx=%2F&type=xhttp&path=%2Fuwk69wdk.0x2G6AOY.KxlWNelJ#hk5
+
+vless://952a99c4-9dbe-4df6-ae4a-7d00e8571943@16.163.107.37:443?type=xhttp&security=reality&sni=www.sky.com&pbk=5U4CWjNirK6wa_ZT9thx41V2jwQLVp_7U0gxah5kOTw&sid=ea75a401&path=%2Fuwk69wdk.0x2G6AOY.KxlWNelJ&spx=%2F&fp=chrome#xhttp
+
+ssh -i "~/.ssh/xray-hangkong.pem" ubuntu@ec2-16-163-107-37.ap-east-1.compute.amazonaws.com
 
 sudo su -
 bash <(curl -sL https://fameandpartners.github.io/script/xr.sh) 
 bash <(curl -sL https://raw.githubusercontent.com/syhgzz/script/main/xr.sh) 
 bash <(curl -sL https://gitlab.com/zhouzhuo/scripts/-/raw/main/xr.sh)
 bash <(curl -sL https://syhgzz.github.io/scripts/xr.sh )
+
+xray服务器新版
+wget --no-check-certificate -O ${HOME}/Xray-script.sh https://raw.githubusercontent.com/zxcvos/Xray-script/main/xhttp.sh && bash ${HOME}/Xray-script.sh
+
+vless://952a99c4-9dbe-4df6-ae4a-7d00e8571943@16.163.107.37:443?type=xhttp&security=reality&sni=www.sky.com&pbk=5U4CWjNirK6wa_ZT9thx41V2jwQLVp_7U0gxah5kOTw&sid=ea75a401&path=%2Fuwk69wdk.0x2G6AOY.KxlWNelJ&spx=%2F&fp=chrome#xhttp
+
 
 pmset -g log  | grep -E "DarkWake|Sheep|Notification|Charge" > ~/z1.txt
 
