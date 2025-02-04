@@ -1,7 +1,5 @@
-zz
 
-
-zz6
+zz01
 ssh user@192.168.98.234
 
 
@@ -15,12 +13,6 @@ hk4
 vless://0874e162-fca6-4874-88df-7a12d6c547ac@hk4.twgitlab.com:443?flow=xtls-rprx-direct&encryption=none&security=xtls&sni=hk4.twgitlab.com&type=tcp&headerType=none#hk4
 ssh -i "~/.ssh/xray-hangkong.pem" ubuntu@ec2-16-163-98-141.ap-east-1.compute.amazonaws.com
 
-hk5
-vless://952a99c4-9dbe-4df6-ae4a-7d00e8571943@16.163.107.37:443?encryption=none&security=reality&sni=www.sky.com&fp=chrome&pbk=5U4CWjNirK6wa_ZT9thx41V2jwQLVp_7U0gxah5kOTw&sid=ea75a401&spx=%2F&type=xhttp&path=%2Fuwk69wdk.0x2G6AOY.KxlWNelJ#hk5
-
-vless://952a99c4-9dbe-4df6-ae4a-7d00e8571943@16.163.107.37:443?type=xhttp&security=reality&sni=www.sky.com&pbk=5U4CWjNirK6wa_ZT9thx41V2jwQLVp_7U0gxah5kOTw&sid=ea75a401&path=%2Fuwk69wdk.0x2G6AOY.KxlWNelJ&spx=%2F&fp=chrome#xhttp
-
-ssh -i "~/.ssh/xray-hangkong.pem" ubuntu@ec2-16-163-107-37.ap-east-1.compute.amazonaws.com
 
 xray服务器旧版
 sudo su -
