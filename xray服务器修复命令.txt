@@ -21,15 +21,18 @@ bash <(curl -sL https://raw.githubusercontent.com/syhgzz/script/main/xr.sh)
 bash <(curl -sL https://gitlab.com/zhouzhuo/scripts/-/raw/main/xr.sh)
 bash <(curl -sL https://syhgzz.github.io/scripts/xr.sh )
 
+hk5
+ssh -i "./.ssh/xray-hangkong.pem" admin@ec2-18-166-226-103.ap-east-1.compute.amazonaws.com
+vless://9080cac2-1331-49e3-9342-32c91c9ed3f5@18.166.226.103:443?type=xhttp&security=reality&sni=tidal.com&pbk=n4BIfgbapdBSZOUeXzjVUqdN57Y1qpkAj10XsKlxs3Q&sid=56988760&path=%2FxgY5GMxt.yfOsgKgT.JCrfFX7o&spx=%2F&fp=chrome#hk5
+
+
 xray服务器新版
 wget --no-check-certificate -O ${HOME}/Xray-script.sh https://raw.githubusercontent.com/zxcvos/Xray-script/main/xhttp.sh && bash ${HOME}/Xray-script.sh
 
+export all_proxy=socks5://192.168.98.176:10808 
 
 
 
 pmset -g log  | grep -E "DarkWake|Sheep|Notification|Charge" > ~/z1.txt
-
-
 powermetrics --samplers all | grep mW
 
-rm -rf /var/run/utmp /var/log/wtmp /var/log/btmp /var/log/lastlog ~/.bash_history;history -c
