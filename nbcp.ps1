@@ -4,8 +4,15 @@
 # 3. push 这个新的分支;
 
 # 获取当前目录下的所有子目录名
+param(
+    [string]$d
+)
+$workdir=$d
+$lastLevel = Split-Path -Path $Workdir -Leaf
+$secondLastLevel = Split-Path -Path (Split-Path -Path $Workdir -Parent) -Leaf
+$prefix=$secondLastLevel + "_" + $lastLevel +"_"
+Set-Location -Path $workdir
 $a = Get-ChildItem -Directory | Select-Object -ExpandProperty Name
-$prefix="System_1_"
 
 foreach ($subDirName in $a) {
     Write-Host "正在处理子目录: $subDirName"
