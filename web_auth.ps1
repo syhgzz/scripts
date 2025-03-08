@@ -3,8 +3,8 @@
 
 
 #此处填城院上网的用户名和密码
-$user = "your_account_number_here"
-$password = "your_password_here"
+$user = "2240201012"
+$password = "292519"
 
 function RC4 {
     param (
@@ -41,7 +41,7 @@ $rckey = Get-Date -Format "yyyyMMddHHmmss"
 $encrypted_password = RC4 $password $rckey
 
 do {
-    $ping = Test-Connection -ComputerName "www.baidu.com" -Count 3 -ErrorAction SilentlyContinue
+    $ping = Test-Connection -ComputerName "taobao.com" -Count 3 -ErrorAction SilentlyContinue
     if ($ping) {
         Write-Output "Network OK"
         exit
