@@ -6,6 +6,12 @@
 $user = "2240201012"
 $password = "292519"
 
+# 系统日志需要最高权限管理员权限. Windows日志->应用程序 
+if (-not [System.Diagnostics.EventLog]::SourceExists("WEBCONNECT")) 
+    { [System.Diagnostics.EventLog]::CreateEventSource("WEBCONNECT", "Application") 
+}; 
+Write-EventLog -LogName "Application" -Source "WEBCONNECT" -EventId 1001 -EntryType Information -Message "Start"
+
 function RC4 {
     param (
         [string]$data,
@@ -43,10 +49,14 @@ $encrypted_password = RC4 $password $rckey
 do {
     $ping = Test-Connection -ComputerName "taobao.com" -Count 3 -ErrorAction SilentlyContinue
     if ($ping) {
-        Write-Output "Network OK"
+        Write-Output "Online"
+        Write-EventLog -LogName "Application" -Source "WEBCONNECT" -EventId 1002 -EntryType Information -Message "Online."
+
         exit
     } else {
-        Write-Output "No Network"
+        Write-Output "Offline"
+        Write-EventLog -LogName "Application" -Source "WEBCONNECT" -EventId 1003 -EntryType Information -Message "Offline."
+
         $headers = @{
             'Accept' = '*/*'
             'X-Requested-With' = 'XMLHttpRequest'
@@ -66,6 +76,8 @@ do {
         }
         Invoke-RestMethod -Uri 'http://1.1.1.3/ac_portal/login.php' -Method POST -Headers $headers -Body $body
         Write-Output "Web authentication authenticated"
+        Write-EventLog -LogName "Application" -Source "WEBCONNECT" -EventId 1004 -EntryType Information -Message "Connected."
+
     }
     Start-Sleep -Seconds 1
 } while ($true)
