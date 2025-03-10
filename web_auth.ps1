@@ -1,5 +1,6 @@
 # 城院上网脚本Powershell版
 # 来源: https://github.com/YYH2913/ZUCC_Internet_Automatic_Authrazation/tree/main  By Ye Yanghan
+# 修改 by zhouzhuo, 增加事件日志; 修复pwsh7的问题.
 
 
 #此处填城院上网的用户名和密码
@@ -45,10 +46,10 @@ function RC4 {
 $rckey = Get-Date -Format "yyyyMMddHHmmss"
 
 $encrypted_password = RC4 $password $rckey
-
+# pwsh 7 ping在失败时返回对象. Windows Powershell在失败时返回$null
 do {
-    $ping = Test-Connection -ComputerName "taobao.com" -Count 3 -ErrorAction SilentlyContinue
-    if ($ping) {
+    $ping = Test-Connection -ComputerName "taobao.com" -Count 1 
+    if ($ping.Status -eq "Success") {
         Write-Output "Online"
         Write-EventLog -LogName "Application" -Source "WEBCONNECT" -EventId 1002 -EntryType Information -Message "Online."
 
@@ -74,9 +75,14 @@ do {
             'auth_tag' = $rckey
             'rememberPwd' = '0'
         }
-        Invoke-RestMethod -Uri 'http://1.1.1.3/ac_portal/login.php' -Method POST -Headers $headers -Body $body
-        Write-Output "Web authentication authenticated"
-        Write-EventLog -LogName "Application" -Source "WEBCONNECT" -EventId 1004 -EntryType Information -Message "Connected."
+        $r = Invoke-RestMethod -Uri 'http://1.1.1.3/ac_portal/login.php' -Method POST -Headers $headers -Body $body
+        if ($r.success -eq "True") {
+            Write-Output "Web authentication success."
+            Write-EventLog -LogName "Application" -Source "WEBCONNECT" -EventId 1004 -EntryType Information -Message "Success."
+        } else {
+            Write-Output "Web authentication failed."
+            Write-EventLog -LogName "Application" -Source "WEBCONNECT" -EventId 1005 -EntryType Information -Message "Failed."
+        }
 
     }
     Start-Sleep -Seconds 1
