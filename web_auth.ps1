@@ -63,8 +63,8 @@ do {
             'X-Requested-With' = 'XMLHttpRequest'
             'User-Agent' = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36 Edg/111.0.1661.44'
             'Content-Type' = 'application/x-www-form-urlencoded; charset=UTF-8'
-            'Origin' = 'http://1.1.1.3'
-            'Referer' = 'http://1.1.1.3/ac_portal/20230318032256/pc.html?template=20230318032256&tabs=pwd-sms&vlanid=0&_ID_=0&switch_url=&url=http://1.1.1.3/homepage/index.html&controller_type=&mac=99-99-99-99-99-99'
+            'Origin' = 'http://10.69.252.20'
+            'Referer' = 'http://10.69.252.20/ac_portal/20230318032256/pc.html?template=20230318032256&tabs=pwd-sms&vlanid=0&_ID_=0&switch_url=&url=http://1.1.1.3/homepage/index.html&controller_type=&mac=99-99-99-99-99-99'
             'Accept-Language' = 'zh-CN,zh;q=0.9'
             'Accept-Encoding' = 'gzip, deflate'
         }
@@ -75,7 +75,7 @@ do {
             'auth_tag' = $rckey
             'rememberPwd' = '0'
         }
-        $r = Invoke-RestMethod -Uri 'http://1.1.1.3/ac_portal/login.php' -Method POST -Headers $headers -Body $body
+        $r = Invoke-RestMethod -Uri 'http://10.69.252.20/ac_portal/login.php' -Method POST -Headers $headers -Body $body
         if ($r.success -eq "True") {
             Write-Output "Web authentication success."
             Write-EventLog -LogName "Application" -Source "WEBCONNECT" -EventId 1004 -EntryType Information -Message "Success."
