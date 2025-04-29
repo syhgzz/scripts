@@ -21,7 +21,7 @@ echo ${BACKUP_PATH}
 echo ${LATEST_LINK}
 mkdir -p "${BACKUP_PATH}"
  
-rsync -avn --delete \
+rsync -av --delete \
   "${SOURCE_DIR}/" \
   --link-dest "${LATEST_LINK}" \
   --exclude=".cache" \
