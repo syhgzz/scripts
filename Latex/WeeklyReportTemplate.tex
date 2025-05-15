@@ -1,0 +1,138 @@
+% 周报Latex模板 by zhouzhuo 2025.5.12
+\documentclass{article}
+\usepackage{geometry}
+\geometry{
+  a4paper,
+  hmargin={2.5cm,2.5cm}, % 左右不同边距
+  vmargin=3cm,         % 上下边距
+  headheight=15pt      % 精确控制页眉高度
+}
+\usepackage{unicode-math}
+\usepackage{graphicx}
+\usepackage[UTF8]{ctex}         % 中文支持
+\usepackage{array}              % 列格式增强
+\usepackage{booktabs}           % 高质量表格线
+\usepackage{longtable}          % 跨页表格支持
+\usepackage{multirow}           % 多行/列合并
+\usepackage{ragged2e}           % 对齐控制
+
+
+
+
+
+\begin{document}
+
+% 表格参数设置
+\renewcommand{\arraystretch}{1.2} % 行高调整
+\setlength{\tabcolsep}{4pt}       % 列间距
+% 列格式定义：自动换行
+\newcolumntype{C}[1]{>{\Centering}p{#1}}
+\newcolumntype{L}[1]{>{\RaggedRight}p{#1}}
+\newcolumntype{R}[1]{>{\RaggedLeft}p{#1}}
+
+% 姓名 日期
+\newcommand{\NAME}{周卓}
+\newcommand{\WEEK}{2025.5.12-2025.5.18}
+
+\begin{longtable}{|C{2cm}|L{5cm}|C{2cm}|L{5cm}|}
+    % 表头
+    \hline
+    \multicolumn{4}{|c|}{\large \textbf{研究生工作周报}}\\
+    \hline
+     \textbf{姓名} & \NAME & \textbf{日期} & \WEEK \\
+    \hline
+    \endfirsthead
+    % 后续页表头    
+    \hline
+    \multicolumn{4}{|c|}{\large  \textbf{研究生工作周报} }\\
+    \hline
+     \textbf{姓名} & \NAME & \textbf{日期} & \WEEK \\
+    \hline
+    \endhead
+
+
+    % 表尾
+    \hline
+    \endfoot
+    \hline
+    \endlastfoot
+
+    % 表格内容
+    % 第一行
+
+    \textbf{本周工作}& \multicolumn{3}{L{14cm}|}{
+        本周主要工作是学习了机器学习知识，以及文物三视图生成工作
+        \begin{enumerate}
+            \item 机器学习相关知识
+            \begin{enumerate}
+                \item BP误差逆传播算法(标准BP算法)
+                $$\begin{aligned}
+                    &E_{k}=\frac{1}{2}\sum_{j=1}^{L}(\widehat{y}_{j}^{k}-\widehat{y}_{j}^{k})^{2}
+                    \\&g_{j}^{k}=-\frac{\partial E_{k}}{\partial B^{k}}=-\frac{\partial E_{k}}{\partial\hat{y}_{j}^{k}}\frac{\partial\hat{y}_{j}^{k}}{\partial\hat{y}_{j}^{k}}=(y_{j}^{k}-\hat{y}_{j}^{k})\widehat{y}_{j}^{k}(1-\widehat{y}_{j}^{k})
+                    \\&\frac{\partial\beta^{k}}{\partial W_{hj}}=b_h^k , \frac{\partial\beta_{j}^{k}}{\partial b_{h}^{k}}=w_{hj}.
+                    \\&\Delta W_{hj}=\eta g_{j}^k b_h^k,\Delta\theta_{j}=-\eta g_{j}^{k}
+                    \\&\Delta V_{ih}=\eta e_h^{k}x_{i},\Delta \gamma _h=-\eta e_h^k
+                    \\&-\frac{\partial E_{k}}{\partial b_h^{k}}=-\sum_{j=1}\frac{\partial E_{k}}{\partial\beta_{j}^{k}}\frac{\partial P_{j}^{k}}{\partial b_h^{k}}=\sum_{j=1}^{l}g_{j}^{k}.W_{hj}.
+                    \\&e_{h}^{k}=-\frac{\partial E_{k}}{\partial\alpha_{h}^{k}}=-\frac{\partial E_{k}}{\partial b_{h}^{k}}\frac{\partial b_{h}^{k}}{\partial\alpha_{h}^{k}}=-\frac{\partial E_{k}}{\partial b_{h}^{k}}b_{h}^{k}(1-b_{h}^{k})=\sum_{j=1}^{l}g_{j}^{k}w_{hj}b_{h}^{k}(1-b_{h}^{k})
+                \end{aligned}$$
+                \item 累计BP算法
+                \item 自己总结了标准BP算法的矩阵表示 
+                $$\begin{aligned}
+                       &W=\left[\begin{matrix}w_{11}&...&w_{1l}\\...&...&...\\w_{q1}&...&w_{ql}\end{matrix}\right]
+                       ,A=\left[\begin{matrix}
+                        \widehat{y}_{1}^{k}(1-y_{1}^{k})&O &O 
+                        \\O &...&O 
+                        \\O &O &\widehat{y}_{1}^{k}(1-y_{1}^{k})
+                    \end{matrix}\right] 
+                    \\&\alpha^{k}=V^{T}x^{k}-\gamma 
+                    ,b^{k}=f\cdot\alpha^{k} 
+                    \\&\beta^{k}=W^{T}b^k-\theta
+                    ,y^{k}=f\cdot\beta^{k}
+                    \\&g^{k}=-A^{k}(\widehat{y}^{k}-y^{k}),e^{k}=BWg^{k}    
+                    \\&\Delta W=\eta b^{k}\left(g^{k}\right)^{T} 
+                    ,\Delta\theta=-\eta g^{k} 
+                    \\&\Delta V=\eta x^{k}\left(e^{k}\right)^{T} 
+                    ,\Delta\gamma=-\eta e^{k}
+                    \\ & \frac{\partial Ek}{\partial\beta^{k}}=-g^{k}
+                    \\  & \frac{\partial E_{k}}{\partial W}=-b^{k}(g^{k})T
+                    \\  & \frac{\partial E_{k}}{\partial\theta}=g^{k}
+                \end{aligned}$$ 
+                
+            \end{enumerate}
+        
+            
+        \end{enumerate}
+
+    }\\
+    \hline
+    
+    
+    % 第二行 如果本周工作内容太长, 可以增加一行, 自动换页. 可删去. 
+    \textbf{本周工作}& \multicolumn{3}{L{14cm}|}{
+        如果本周工作内容太长, 可以增加一行, 自动换页. 可删去.  
+        \begin{enumerate}
+            \item 自编程方案线图生成有初步效果, 先用高斯滤波低通处理, 再降采样, 滤去多余的噪声. 再使用canny方法找到边缘. 多次实验, 找到最佳效果参数
+            \item 将实验设备搬至北秀更大实验空间; 配置编程环境
+            \item 正在看OpenCV/相机标定/透视矫正的资料
+            $$
+            \begin{aligned}
+                &\min cx
+                \\&s.t.Ax=b+\sum_{j=1}^{n}\varepsilon^{j}p_{j}
+                \\&x\geq0.
+                \\&\frac{{b}(\varepsilon)_{i}}{x_{ik}}=\frac{{b_{i}}}{y_{ik}}+\frac{y_{i1}}{y_{ik}}\varepsilon^{1}\cdots\frac{y_{ij}}{y_{ik}}\varepsilon^{j}
+            \end{aligned} 
+            $$ 
+        \end{enumerate}
+
+    }\\
+    \hline
+
+    % 下周工作 第三行
+    \textbf{下周工作}& \multicolumn{3}{L{14cm}|}{
+
+    
+    }\\
+
+\end{longtable}
+
+\end{document}
