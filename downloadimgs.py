@@ -1,6 +1,7 @@
 # 从开发工具网络页导出har文件中,提取特定文件批量下载. Chrome和Edge浏览器的开发工具上测试有效. by zhouzhuo 2025.6.2
 import json
 import requests
+from requests.exceptions import Timeout
 from urllib.parse import urlparse
 import os
 from pathlib import Path
@@ -22,7 +23,7 @@ def get_files_from_har(file_path,output_basedir,prefix_list,ext_list):
     
 
     # 2. 提取所有图片 URL
-    image_urls = []
+    
     for entry in har_data["log"]["entries"]:
         # p = entry["response"]["content"]["mimeType"]
         if "mimeType" in entry["response"]["content"] and entry["response"]["content"]["mimeType"].startswith("image/"):
@@ -30,11 +31,25 @@ def get_files_from_har(file_path,output_basedir,prefix_list,ext_list):
             parsed = urlparse(url)
             output_fname, output_ext = os.path.splitext(os.path.basename(parsed.path))
             if output_ext in ext_list and output_fname.startswith(prefix_list[0]):
-                image_urls.append(url)  # 或直接取 URL
-                response = requests.get(url)
-                output_file = output_dir + "/" + output_fname +output_ext #输出文件名, 重命名image_序号
-                with open(output_file, "wb") as f:
-                    f.write(response.content)
+                download_queue = []
+                download_queue.append(url)  # 或直接取 URL
+                
+                for url in download_queue:
+                    try:
+                        response = requests.get(url)
+                    except Timeout:
+                        print(f"Timeout when getting {url}. Retrying......")
+                        download_queue.append(url)
+                        continue # 超时失败时, 加入队列, 重试
+
+                    output_file = output_dir + "/" + output_fname +output_ext #输出文件名, 重命名image_序号
+                    with open(output_file, "wb") as f:
+                        f.write(response.content)
+                        f.close()
+                        print(f"Successfully get {url}. Saving to {output_file}")
+                        download_queue.clear()
+                        break
+
 
 
 
@@ -61,5 +76,6 @@ if __name__ =="__main__":
             if item.suffix == input_ext:
 
                 file_path = str(item)
+                print(f"Downloading...... {file_path}")
                 get_files_from_har(file_path,output_basedir,prefix_list,ext_list)
-                print(f"Downloaded {file_path}")
+                print(f"Done. {file_path}")
