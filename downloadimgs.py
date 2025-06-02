@@ -62,3 +62,4 @@ if __name__ =="__main__":
 
                 file_path = str(item)
                 get_files_from_har(file_path,output_basedir,prefix_list,ext_list)
+                print(f"Downloaded {file_path}")
