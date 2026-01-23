@@ -13,6 +13,7 @@ timestamp() {
 # 检查目标并输出到错误流
 check_ping() {
     local target="$1"
+    echo "$(timestamp) INFO: 正在ping $target..." 
     if ! ping -c 1 -W 2 "$target"  2>&1; then
         echo "$(timestamp) ERROR: 无法ping通 $target" >&2
         return 1
