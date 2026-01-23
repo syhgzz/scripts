@@ -1,0 +1,4 @@
+nohup: ignoring input
+2026-01-23 21:30:38 INFO: 开始ping监控...
+2026-01-23 23:36:05 ERROR: 无法ping通 163.com
+2026-01-23 23:36:13 ERROR: 无法ping通 163.com
