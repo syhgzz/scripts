@@ -4,6 +4,10 @@
 # 目标地址
 TARGET1="163.com"
 TARGET2="192.168.1.1"
+TARGET3="10.66.98.1"
+TARGET4="10.61.10.10"
+TARGET5="10.61.10.11"
+
 
 # 日志时间戳函数
 timestamp() {
@@ -27,5 +31,11 @@ while true; do
     check_ping "$TARGET1"
     echo ""
     check_ping "$TARGET2"
+    echo ""
+    check_ping "$TARGET3"
+    echo ""
+    check_ping "$TARGET4"
+    echo ""
+    check_ping "$TARGET5"
     sleep 5  # 每5秒检查一次
 done
