@@ -5,7 +5,7 @@
 
 #此处填城院上网的用户名和密码
 $user = "2240201012"
-$password = "292519"
+$password = "hzcu@5a413"
 
 # 系统日志需要最高权限管理员权限. Windows日志->应用程序 
 if (-not [System.Diagnostics.EventLog]::SourceExists("WEBCONNECT")) 
