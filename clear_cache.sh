@@ -32,6 +32,15 @@ rm -rf "$HOME/Library/Application Support/DingTalkMac/98485467_v2/resource_cache
 echo "==> 清理钉钉 EAppFiles"
 rm -rf "$HOME/Library/Application Support/DingTalkMac/98485467_v2/EAppFiles" || echo "跳过: 钉钉 EAppFiles"
 
+echo "==> 清理 npm 缓存"
+npm cache clean --force || echo "跳过: npm 缓存"
+
+echo "==> 清理 uv 过期缓存"
+uv cache prune || echo "跳过: uv 缓存"
+
+echo "==> 清理 Homebrew 缓存"
+brew cleanup -s || echo "跳过: Homebrew 缓存"
+
 # 需要管理员权限
 echo "==> 清理 /Library/Caches/* (sudo)"
 sudo rm -rf /Library/Caches/* || echo "跳过: /Library/Caches/*"
