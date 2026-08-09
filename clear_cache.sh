@@ -32,6 +32,9 @@ rm -rf "$HOME/Library/Application Support/DingTalkMac/98485467_v2/resource_cache
 echo "==> 清理钉钉 EAppFiles"
 rm -rf "$HOME/Library/Application Support/DingTalkMac/98485467_v2/EAppFiles" || echo "跳过: 钉钉 EAppFiles"
 
+echo "==> 清理 iTunes iPhone 固件包 (.ipsw)"
+rm -rf "$HOME/Library/iTunes/iPhone Software Updates/"* || echo "跳过: iPhone Software Updates"
+
 echo "==> 清理 npm 缓存"
 npm cache clean --force || echo "跳过: npm 缓存"
 
