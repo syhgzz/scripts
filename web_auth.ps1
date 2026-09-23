@@ -1,20 +1,44 @@
-# 城院上网脚本Powershell版
-# 来源: https://github.com/YYH2913/ZUCC_Internet_Automatic_Authrazation/tree/main  By Ye Yanghan
-# 修改 by zhouzhuo, 增加事件日志; 修复pwsh7的问题.
-# 2026-09-23 增加 IPv6 双栈认证; 事件 ID 从 1001-1005 迁移到 20001-20008
-#            (1001 在 Application 日志中被 Windows Error Reporting 等来源共用, 仅按 ID 过滤会混)
+# 城院校园网上网认证脚本 (Srun 门户, IPv4 / IPv6 双栈)
+# 检查两个协议栈各自的认证状态, 只给需要认证的那一侧重新登录.
+#
+# 用法:
+#   只检查状态 (不需要凭据, 无副作用): pwsh -File web_auth.ps1 -ProbeOnly
+#   认证一次:                          pwsh -File web_auth.ps1 -User <学号> -Password <密码>
+#   计划任务的动作就照第二种写.
+#
+# 注意:
+#   密码会出现在进程命令行里(任务管理器可见), 但本文件本身不含任何凭据.
+#   判定必须走 HTTPS —— 这个网络里 HTTP 永远返回反代理提醒页, 判断不了认证状态.
+#   IPv4 与 IPv6 是各自独立的会话, 必须分别认证, 只登一侧救不了另一侧.
+#   依赖 curl.exe (Win10 1803+ 自带); 首次运行需管理员以创建事件源.
+#
+# 退出码 0=正常或已恢复 1=缺少凭据 2=重试耗尽  |  事件日志 WEBCONNECT, ID 20001-20008
+# 原作者 Ye Yanghan; 修改 zhouzhuo (事件日志 / pwsh7 兼容 / IPv6 双栈 / 凭据改为命令行传入)
 
 [CmdletBinding()]
 param(
-    # 只探测并打印两栈状态, 绝不发送登录请求 (也不发唤醒请求)
+    # 校园网账号 (学号). 使用 -ProbeOnly 时可省略.
+    [string]$User,
+
+    # 校园网密码. 使用 -ProbeOnly 时可省略.
+    [string]$Password,
+
+    # 只探测并打印两栈状态, 绝不发送登录请求 (也不发唤醒请求), 不需要凭据.
     [switch]$ProbeOnly,
+
     # 单次运行内的最大重试轮数
     [int]$MaxAttempts = 3
 )
 
-#此处填城院上网的用户名和密码
-$user = "2240201012"
-$password = "hzcu@5a413"
+if (-not $ProbeOnly) {
+    if ([string]::IsNullOrWhiteSpace($User) -or [string]::IsNullOrWhiteSpace($Password)) {
+        Write-Output 'ERROR: 缺少凭据.'
+        Write-Output '  认证       : pwsh -File web_auth.ps1 -User <账号> -Password <密码>'
+        Write-Output '  只检查状态 : pwsh -File web_auth.ps1 -ProbeOnly'
+        Write-Output '  详见本文件开头的使用说明.'
+        exit 1
+    }
+}
 
 # ---------------------------------------------------------------- 事件 ID
 # 20000 段在 Application 日志采样中无任何其它来源占用
@@ -128,7 +152,7 @@ function Invoke-PortalLogin {
 
     # 每次调用重新生成时间戳密钥, 两个栈不共用
     $rckey = Get-Date -Format "yyyyMMddHHmmss"
-    $encrypted_password = RC4 $password $rckey
+    $encrypted_password = RC4 $Password $rckey
 
     $headers = @{
         'Accept' = '*/*'
@@ -141,7 +165,7 @@ function Invoke-PortalLogin {
     }
     $body = @{
         'opr' = 'pwdLogin'
-        'userName' = $user
+        'userName' = $User
         'pwd' = $encrypted_password
         'auth_tag' = $rckey
         'rememberPwd' = '0'
@@ -234,8 +258,8 @@ function Test-HasIpv6 {
 }
 
 # ---------------------------------------------------------------- 主流程
-Write-AuthEvent $EV_START ("Start. ProbeOnly={0} MaxAttempts={1} curl={2}" -f `
-        [bool]$ProbeOnly, $MaxAttempts, $(if ($Script:CurlExe) { $Script:CurlExe } else { 'NOT FOUND' }))
+Write-AuthEvent $EV_START ("Start. ProbeOnly={0} MaxAttempts={1} user={2} curl={3}" -f `
+        [bool]$ProbeOnly, $MaxAttempts, $(if ($ProbeOnly) { '(probe only)' } else { $User }), $(if ($Script:CurlExe) { $Script:CurlExe } else { 'NOT FOUND' }))
 
 $attempt = 0
 while ($attempt -lt $MaxAttempts) {
