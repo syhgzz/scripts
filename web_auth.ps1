@@ -4,7 +4,26 @@
 # 用法:
 #   只检查状态 (不需要凭据, 无副作用): pwsh -File web_auth.ps1 -ProbeOnly
 #   认证一次:                          pwsh -File web_auth.ps1 -User <学号> -Password <密码>
-#   计划任务的动作就照第二种写.
+#
+# 计划任务的动作 (任务计划程序 -> 操作 -> 编辑):
+#   程序或脚本 : pwsh
+#   添加参数   : -File "C:\Users\<用户名>\repos\scripts\web_auth.ps1" -User <学号> -Password "<密码>"
+#
+#   【引号: 一律用双引号, 绝不要用单引号】
+#   计划任务是用 CreateProcess 直接把 pwsh 拉起来的, 中间不经过任何 shell。
+#   这条路上 Windows 只认双引号, 单引号会被原样当成参数值的一部分传进来:
+#       -Password "abc123"  ->  脚本收到 abc123      (正确)
+#       -Password 'abc123'  ->  脚本收到 'abc123'    (多出两个单引号, 长度 +2)
+#       -Password 'ab cd'   ->  脚本收到 'ab, 且 cd' 掉成多余参数 (彻底崩坏)
+#   后果: RC4 加密的是带引号的错字符串, 门户解密失败并回 "用户名或密码错误",
+#   重试 3 轮后以退出码 2 结束 —— 症状是"密码明明是对的却怎么也登不上"。
+#
+#   实测 (2026-09-24, 同一条口令):
+#     计划任务   : 双引号 OK / 不加引号 OK / 单引号 失败
+#     PowerShell : 双引号 OK / 不加引号 OK / 单引号 OK  (shell 会先解析掉引号)
+#     cmd.exe    : 双引号 OK / 不加引号 OK / 单引号 失败 (cmd 同样不认单引号)
+#   => 不存在"计划任务不加、手动必须加"这种区别。统一写双引号, 一个写法到处都对;
+#      密码里含空格等特殊字符时双引号更是必须的。
 #
 # 注意:
 #   密码会出现在进程命令行里(任务管理器可见), 但本文件本身不含任何凭据.
@@ -35,6 +54,7 @@ if (-not $ProbeOnly) {
         Write-Output 'ERROR: 缺少凭据.'
         Write-Output '  认证       : pwsh -File web_auth.ps1 -User <账号> -Password <密码>'
         Write-Output '  只检查状态 : pwsh -File web_auth.ps1 -ProbeOnly'
+        Write-Output '  引号请一律用双引号: 单引号在计划任务 / cmd 里会变成密码的一部分 (症状是"用户名或密码错误").'
         Write-Output '  详见本文件开头的使用说明.'
         exit 1
     }
@@ -52,6 +72,7 @@ $EV_FAIL     = $EventBase + 5   # 20005 认证失败
 $EV_NOIPV6   = $EventBase + 6   # 20006 IPv6 不可用, 跳过
 $EV_GIVEUP   = $EventBase + 7   # 20007 重试耗尽
 $EV_PROBERR  = $EventBase + 8   # 20008 探测异常
+$EV_V6STATE  = $EventBase + 9   # 20009 IPv6 地址/租期快照 (纯取证, 不参与判定)
 
 # 字面量 IP 天然钉死协议族: 1.1.1.3 -> IPv4, [1::3] -> IPv6
 $PortalV4 = '1.1.1.3'
@@ -257,6 +278,41 @@ function Test-HasIpv6 {
     }
 }
 
+# 取证用: 快照当前非 link-local 的 IPv6 地址及其租期状态.
+#
+# 为什么需要它: 校园网卡的 IPv6 是 DHCPv6 有状态分配 (PrefixOrigin/SuffixOrigin 均为 Dhcp),
+# 寿命有限 —— 实测剩余 ValidLife 约 11 小时 / PrefLife 约 6.5 小时. 而"IPv4 登录是否顺带
+# 放行 IPv6"这件事很可能随租期阶段而变 (地址刚续期/刚更换时网关未必已建立映射).
+# 把每次判定时刻的租期状态落到日志里, 才能把 g4/g6 的走向与租期关联起来,
+# 而不是只凭某一次观测就下结论.
+#
+# 任何异常都必须吞掉: 取证绝不能影响认证主流程.
+function Get-Ipv6LeaseState {
+
+    # 无限寿命渲染成 inf, 否则给出紧凑的 d/h 形式, 避免 10675199.02:48:05 这种噪音
+    function Format-Life([object]$t) {
+        if ($null -eq $t) { return 'n/a' }
+        if ($t.TotalDays -ge 3650) { return 'inf' }
+        if ($t.TotalDays -ge 1) { return ('{0}d{1:00}:{2:00}' -f [int]$t.TotalDays, $t.Hours, $t.Minutes) }
+        return ('{0}h{1:00}m' -f [int]$t.TotalHours, $t.Minutes)
+    }
+
+    try {
+        $a = Get-NetIPAddress -AddressFamily IPv6 -ErrorAction Stop |
+            Where-Object { $_.IPAddress -notmatch '^fe80' -and $_.IPAddress -ne '::1' }
+        if (-not $a) { return 'none' }
+
+        $parts = foreach ($x in $a) {
+            '{0}@{1}|{2}/{3}|{4}|pref={5}|valid={6}' -f `
+                $x.IPAddress, $x.InterfaceAlias, $x.PrefixOrigin, $x.SuffixOrigin, $x.AddressState,
+                (Format-Life $x.PreferredLifetime), (Format-Life $x.ValidLifetime)
+        }
+        return ($parts -join '; ')
+    } catch {
+        return 'n/a'
+    }
+}
+
 # ---------------------------------------------------------------- 主流程
 Write-AuthEvent $EV_START ("Start. ProbeOnly={0} MaxAttempts={1} user={2} curl={3}" -f `
         [bool]$ProbeOnly, $MaxAttempts, $(if ($ProbeOnly) { '(probe only)' } else { $User }), $(if ($Script:CurlExe) { $Script:CurlExe } else { 'NOT FOUND' }))
@@ -274,6 +330,8 @@ while ($attempt -lt $MaxAttempts) {
 
     # --- 分栈判据: HTTPS + 证书校验 ---
     $hasV6 = Test-HasIpv6
+    # 在判定发生的这一刻快照租期状态, 才能与本次 attempt 的 g4/g6 关联
+    Write-AuthEvent $EV_V6STATE ("IPv6State. attempt={0} hasV6={1} {2}" -f $attempt, $hasV6, (Get-Ipv6LeaseState))
     $g4 = $null
     $g6 = $null
     try { $g4 = Test-StackGated 4 } catch { Write-AuthEvent $EV_PROBERR "IPv4 探测异常: $($_.Exception.Message)" }
@@ -299,20 +357,30 @@ while ($attempt -lt $MaxAttempts) {
         else { Write-AuthEvent $EV_FAIL $res4.Msg 'Warning' }
     }
 
-    # --- IPv6 分支: 先唤醒, 再按需认证 ---
+    # --- IPv6 分支: 先测 -> 不通才唤醒 -> 再测 -> 还不通才认证 ---
+    # 这里的"先测"必须是新鲜的一次: 外层 $g6 采样于 IPv4 登录之前, 而 IPv4 登录
+    # 可能已经顺带放行了 IPv6 —— 拿旧快照决定要不要唤醒, 会白唤醒一次.
     if (-not $hasV6) {
         Write-AuthEvent $EV_NOIPV6 "网卡上没有可用的 IPv6 地址, 跳过"
-    } elseif ($g6 -eq $true) {
-        Send-Ipv6Wakeup
-        Start-Sleep -Seconds 2
-        $g6b = $null
-        try { $g6b = Test-StackGated 6 } catch { }
-        if ($g6b -eq $false) {
-            Write-AuthEvent $EV_OK "IPv6 : 唤醒后已恢复 (未发登录请求)"
+    } elseif ($g6 -ne $false) {          # 旧快照已确认 clean 就不必进这个分支
+        $g6now = $null
+        try { $g6now = Test-StackGated 6 } catch { Write-AuthEvent $EV_PROBERR "IPv6 复测异常: $($_.Exception.Message)" }
+
+        if ($g6now -eq $false) {
+            # 第一步就通了: 大概率是刚才的 IPv4 登录顺带放行的
+            Write-AuthEvent $EV_OK "IPv6 : 复测已通, 跳过唤醒与登录"
         } else {
-            $res6 = Invoke-PortalLogin -PortalHost $PortalV6 -Stack 'IPv6'
-            if ($res6.Ok) { Write-AuthEvent $EV_OK $res6.Msg }
-            else { Write-AuthEvent $EV_FAIL $res6.Msg 'Warning' }
+            Send-Ipv6Wakeup
+            Start-Sleep -Seconds 2
+            $g6b = $null
+            try { $g6b = Test-StackGated 6 } catch { }
+            if ($g6b -eq $false) {
+                Write-AuthEvent $EV_OK "IPv6 : 唤醒后已恢复 (未发登录请求)"
+            } else {
+                $res6 = Invoke-PortalLogin -PortalHost $PortalV6 -Stack 'IPv6'
+                if ($res6.Ok) { Write-AuthEvent $EV_OK $res6.Msg }
+                else { Write-AuthEvent $EV_FAIL $res6.Msg 'Warning' }
+            }
         }
     }
 
