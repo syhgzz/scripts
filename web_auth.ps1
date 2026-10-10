@@ -31,7 +31,7 @@
 #   IPv4 与 IPv6 是各自独立的会话, 必须分别认证, 只登一侧救不了另一侧.
 #   依赖 curl.exe (Win10 1803+ 自带); 首次运行需管理员以创建事件源.
 #
-# 退出码 0=正常或已恢复 1=缺少凭据 2=重试耗尽  |  事件日志 WEBCONNECT, ID 20001-20008
+# 退出码 0=正常或已恢复 1=缺少凭据 2=重试耗尽  |  事件日志 WEBCONNECT, ID 20001-20009
 # 原作者 Ye Yanghan; 修改 zhouzhuo (事件日志 / pwsh7 兼容 / IPv6 双栈 / 凭据改为命令行传入)
 
 [CmdletBinding()]
@@ -127,10 +127,10 @@ function Write-AuthEvent {
     }
 }
 
-# curl.exe 缺失时 Test-StackGated 会永远返回"未知", 脚本静默退化成仅 ping 判据.
+# curl.exe 缺失时 Test-StackGated 会永远返回"未知", 脚本会退化成每次运行都登录一次.
 # 必须显式告警, 否则这种降级在日志里看不出来.
 if (-not $Script:CurlExe) {
-    Write-AuthEvent $EV_PROBERR "curl.exe 未找到: 无法进行 HTTPS 分栈探测, 已退化为仅 ping 判据" 'Warning'
+    Write-AuthEvent $EV_PROBERR "curl.exe 未找到: 无法进行 HTTPS 分栈探测, 已退化为每次运行都执行一次登录 (幂等, 无害), 但无法判断是否已在线" 'Warning'
 }
 
 # ---------------------------------------------------------------- RC4
@@ -215,25 +215,6 @@ function Invoke-PortalLogin {
     if ("$($r.msg)" -match '已在线|不需要再次认证') { $ok = $true }
 
     return [pscustomobject]@{ Ok = $ok; Msg = "$Stack : $($r.msg)" }
-}
-
-# ---------------------------------------------------------------- IPv6 唤醒
-function Send-Ipv6Wakeup {
-    # 纯 GET, 不带任何凭据. 目的只是让网关看到本机 IPv6 流量.
-    # 之前观察到"发一次 IPv6 门户请求后 IPv6 即恢复", 但当时有手工干预, 归因未定;
-    # 先唤醒再按需认证可同时覆盖"只需产生流量"和"确需认证"两种假设.
-    $a = @{
-        Uri                = "http://$PortalV6/"
-        MaximumRedirection = 0
-        TimeoutSec         = 8
-        UseBasicParsing    = $true
-        ErrorAction        = 'Stop'
-    }
-    try {
-        $null = Invoke-WebRequest @a
-    } catch {
-        # 302 会抛异常, 属预期, 忽略
-    }
 }
 
 # ---------------------------------------------------------------- 分栈判定
@@ -321,10 +302,13 @@ $attempt = 0
 while ($attempt -lt $MaxAttempts) {
     $attempt++
 
-    # --- 链路层: 保留原有的 ping 判据 (实测走 IPv4, 对 IPv6 完全失明) ---
+    # --- 链路层: ping 仅作取证, 不参与判定 ---
+    # 它测的"能不能 ping 通"与"要不要登录"没有因果关系: g4 为 clean 已说明网络是好的,
+    # g4 为 gated 就必须登录, g4 未知时按安全默认也要登录 —— 三种情况 ping 都改变不了结论.
+    # 超时压到 1 秒: 断网时默认要等 5 秒左右, 实测最大 5.97s, 曾占单次运行的 44%.
     $icmpOk = $false
     try {
-        $ping = Test-Connection -ComputerName "taobao.com" -Count 1 -ErrorAction SilentlyContinue
+        $ping = Test-Connection -ComputerName "taobao.com" -Count 1 -TimeoutSeconds 1 -ErrorAction SilentlyContinue
         if ($null -ne $ping -and "$($ping.Status)" -eq 'Success') { $icmpOk = $true }
     } catch { $icmpOk = $false }
 
@@ -339,7 +323,7 @@ while ($attempt -lt $MaxAttempts) {
         try { $g6 = Test-StackGated 6 } catch { Write-AuthEvent $EV_PROBERR "IPv6 探测异常: $($_.Exception.Message)" }
     }
 
-    if ($icmpOk -and $g4 -eq $false -and ($g6 -eq $false -or -not $hasV6)) {
+    if ($g4 -eq $false -and ($g6 -eq $false -or -not $hasV6)) {
         Write-AuthEvent $EV_ONLINE ("Online. attempt={0} icmp=OK g4=clean g6={1}" -f $attempt, (Format-Gate $g6))
         exit 0
     }
@@ -351,37 +335,21 @@ while ($attempt -lt $MaxAttempts) {
     if ($ProbeOnly) { exit 0 }
 
     # --- IPv4 分支 ---
-    if ((-not $icmpOk) -or ($g4 -ne $false)) {
+    if ($g4 -ne $false) {
         $res4 = Invoke-PortalLogin -PortalHost $PortalV4 -Stack 'IPv4'
         if ($res4.Ok) { Write-AuthEvent $EV_OK $res4.Msg }
         else { Write-AuthEvent $EV_FAIL $res4.Msg 'Warning' }
     }
 
-    # --- IPv6 分支: 先测 -> 不通才唤醒 -> 再测 -> 还不通才认证 ---
-    # 这里的"先测"必须是新鲜的一次: 外层 $g6 采样于 IPv4 登录之前, 而 IPv4 登录
-    # 可能已经顺带放行了 IPv6 —— 拿旧快照决定要不要唤醒, 会白唤醒一次.
+    # --- IPv6 分支: 独立会话, 直接按判定结果登录 ---
+    # 两栈会话独立(实测: 从一侧登出完全不影响另一侧), 所以 IPv4 登录不会顺带放行 IPv6,
+    # 不需要"登录后复测 / 唤醒 / 再复测"这条链 —— 全量日志里它从未改变过结果.
     if (-not $hasV6) {
         Write-AuthEvent $EV_NOIPV6 "网卡上没有可用的 IPv6 地址, 跳过"
-    } elseif ($g6 -ne $false) {          # 旧快照已确认 clean 就不必进这个分支
-        $g6now = $null
-        try { $g6now = Test-StackGated 6 } catch { Write-AuthEvent $EV_PROBERR "IPv6 复测异常: $($_.Exception.Message)" }
-
-        if ($g6now -eq $false) {
-            # 第一步就通了: 大概率是刚才的 IPv4 登录顺带放行的
-            Write-AuthEvent $EV_OK "IPv6 : 复测已通, 跳过唤醒与登录"
-        } else {
-            Send-Ipv6Wakeup
-            Start-Sleep -Seconds 2
-            $g6b = $null
-            try { $g6b = Test-StackGated 6 } catch { }
-            if ($g6b -eq $false) {
-                Write-AuthEvent $EV_OK "IPv6 : 唤醒后已恢复 (未发登录请求)"
-            } else {
-                $res6 = Invoke-PortalLogin -PortalHost $PortalV6 -Stack 'IPv6'
-                if ($res6.Ok) { Write-AuthEvent $EV_OK $res6.Msg }
-                else { Write-AuthEvent $EV_FAIL $res6.Msg 'Warning' }
-            }
-        }
+    } elseif ($g6 -ne $false) {
+        $res6 = Invoke-PortalLogin -PortalHost $PortalV6 -Stack 'IPv6'
+        if ($res6.Ok) { Write-AuthEvent $EV_OK $res6.Msg }
+        else { Write-AuthEvent $EV_FAIL $res6.Msg 'Warning' }
     }
 
     Start-Sleep -Seconds 2
